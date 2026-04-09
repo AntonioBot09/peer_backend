@@ -1,16 +1,48 @@
 <?php
+
 declare(strict_types=1);
 
+use Fawaz\App\MintService;
+use Fawaz\App\MintServiceImpl;
+use Fawaz\App\Repositories\MintAccountRepositoryImpl;
+use Fawaz\App\Repositories\WalletHandlerFactory;
 use Fawaz\BaseURL;
+use Fawaz\Database\MintRepository;
+use Fawaz\Database\MintRepositoryImpl;
+use Fawaz\Database\InteractionsPermissionsMapperImpl;
+use Fawaz\Database\Interfaces\InteractionsPermissionsMapper;
+use Fawaz\Database\Interfaces\ProfileRepository;
+use Fawaz\Database\UserActionsRepository;
+use Fawaz\Database\UserActionsRepositoryImpl;
+use Fawaz\Database\WalletMapper;
+use Fawaz\Utils\ResponseMessagesProvider;
 use Fawaz\Services\JWTService;
 use Fawaz\Services\Mailer;
 use Fawaz\Services\LiquidityPool;
 use DI\ContainerBuilder;
+use Fawaz\App\ProfileServiceImpl;
+use Fawaz\App\Interfaces\ProfileService;
+use Fawaz\App\Interfaces\GemsService;
+use Fawaz\App\GemsServiceImpl;
+use Fawaz\App\Models\Core\Model;
+use Fawaz\Utils\PeerLogger;
+use Fawaz\Utils\ResponseMessagesProviderImpl;
+use Fawaz\Database\ProfileRepositoryImpl;
+use Fawaz\Database\GemsRepository;
+use Fawaz\Database\GemsRepositoryImpl;
 use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
-use Monolog\Processor\UidProcessor;
 use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
+use Fawaz\Utils\PeerLoggerInterface;
+use Fawaz\App\Assembler\ProfileEnrichmentAssembler;
+use Fawaz\Database\Interfaces\ShopOrderPermissionsMapper;
+use Fawaz\Database\ShopOrderPermissionsMapperImpl;
+use Fawaz\App\Repositories\MintAccountRepository;
+use Fawaz\App\UserService;
+use Fawaz\App\UserServiceInterface;
+use Fawaz\Database\PeerTokenMapper;
+use Fawaz\Database\PeerTokenMapperInterface;
+use Fawaz\Database\UserMapper;
+use Fawaz\Database\UserMapperInterface;
 
 return static function (ContainerBuilder $containerBuilder, array $settings) {
     $containerBuilder->addDefinitions([
@@ -18,13 +50,10 @@ return static function (ContainerBuilder $containerBuilder, array $settings) {
 
         BaseURL::class => fn (ContainerInterface $c) => new BaseURL($c->get('settings')['base_url']),
 
-        LoggerInterface::class => function (ContainerInterface $c) {
+        PeerLoggerInterface::class => function (ContainerInterface $c) {
             $settings = $c->get('settings')['logger'];
 
-            $logger = new Logger($settings['name']);
-
-            $processor = new UidProcessor();
-            $logger->pushProcessor($processor);
+            $logger = new PeerLogger($settings['name']);
 
             $handler = new StreamHandler($settings['path'], $settings['level']);
             $logger->pushHandler($handler);
@@ -41,37 +70,63 @@ return static function (ContainerBuilder $containerBuilder, array $settings) {
                 file_get_contents($settings['refreshPublicKeyPath']),
                 (int)$settings['accessTokenValidity'],
                 (int)$settings['refreshTokenValidity'],
-                $c->get(LoggerInterface::class)
+                $c->get(PeerLoggerInterface::class)
             );
         },
 
         Mailer::class => function (ContainerInterface $c) {
             $settings = $c->get('settings');
-			$Envi = [];
-			$Envi = ['mailapilink' => (string)$settings['mailapilink'], 'mailapikey' => (string)$settings['mailapikey']];
+            $Envi = [];
+            $Envi = ['mailapilink' => (string)$settings['mailapilink'], 'mailapikey' => (string)$settings['mailapikey']];
             return new Mailer(
                 $Envi,
-                $c->get(LoggerInterface::class)
+                $c->get(PeerLoggerInterface::class)
             );
         },
 
         LiquidityPool::class => function (ContainerInterface $c) {
             $settings = $c->get('settings')['liquidity'];
-			$Envi = [];
-			$Envi = ['peer' => (string)$settings['peer'], 'pool' => (string)$settings['pool'], 'burn' => (string)$settings['burn'], 'btcpool' => (string)$settings['btcpool']];
+            $Envi = [];
+            $Envi = ['peer' => (string)$settings['peer'], 'pool' => (string)$settings['pool'], 'burn' => (string)$settings['burn'], 'btcpool' => (string)$settings['btcpool'], 'peerShop' => (string)$settings['peerShop']];
             return new LiquidityPool(
                 $Envi
             );
         },
 
-        PDO::class => function(ContainerInterface $c) {
+        PDO::class => function (ContainerInterface $c) {
             $settings = $c->get('settings')['db'];
 
             $pdo = new PDO($settings['dsn'], $settings['username'], $settings['password']);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
+            Model::setDB($pdo);
             return $pdo;
         },
+
+        ProfileService::class => \DI\autowire(ProfileServiceImpl::class),
+        GemsService::class => \DI\autowire(GemsServiceImpl::class),
+        ProfileRepository::class => \DI\autowire(ProfileRepositoryImpl::class),
+        ProfileEnrichmentAssembler::class => \DI\autowire(ProfileEnrichmentAssembler::class),
+        ResponseMessagesProvider::class => function (ContainerInterface $c) {
+            $path = __DIR__ . "/../../runtime-data/media/assets/response-codes.json";
+            return new ResponseMessagesProviderImpl($path);
+        },
+        InteractionsPermissionsMapper::class => \DI\autowire(InteractionsPermissionsMapperImpl::class),
+        ShopOrderPermissionsMapper::class => \DI\autowire(ShopOrderPermissionsMapperImpl::class),
+        WalletHandlerFactory::class => function (ContainerInterface $c) {
+            return new WalletHandlerFactory(
+                $c->get(WalletMapper::class),
+                $c->get(MintAccountRepositoryImpl::class)
+            );
+        },
+        MintRepository::class => \DI\autowire(MintRepositoryImpl::class),
+        MintService::class => \DI\autowire(MintServiceImpl::class),
+        GemsRepository::class => \DI\autowire(GemsRepositoryImpl::class),
+        UserActionsRepository::class => \DI\autowire(UserActionsRepositoryImpl::class),
+        MintAccountRepository::class => \DI\autowire(MintAccountRepositoryImpl::class),
+        UserMapperInterface::class => \DI\autowire(UserMapper::class),
+        PeerTokenMapperInterface::class => \DI\autowire(PeerTokenMapper::class),
+        UserServiceInterface::class => \DI\autowire(UserService::class)
     ]);
 };

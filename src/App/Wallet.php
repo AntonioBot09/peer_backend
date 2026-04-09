@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\App;
 
 use DateTime;
 use Fawaz\Filter\PeerInputFilter;
 use Fawaz\config\constants\ConstantsConfig;
+use Fawaz\Services\ContentFiltering\Capabilities\HasUserId;
 
-class Wallet
+class Wallet implements HasUserId
 {
     protected string $token;
     protected string $userid;
@@ -31,7 +34,7 @@ class Wallet
         $this->numbers = $data['numbers'] ?? 0.0;
         $this->numbersq = $data['numbersq'] ?? 0;
         $this->whereby = $data['whereby'] ?? 0;
-        $this->createdat = $data['createdat'] ?? (new DateTime())->format('Y-m-d H:i:s.u');
+        $this->createdat = $data['createdat'] ?? new DateTime()->format('Y-m-d H:i:s.u');
     }
 
     // Array Copy methods
@@ -143,13 +146,13 @@ class Wallet
 
         $validationErrors = $inputFilter->getMessages();
 
-        foreach ($validationErrors as $field => $errors) {
+        foreach ($validationErrors as $errors) {
             $errorMessages = [];
             foreach ($errors as $error) {
                 $errorMessages[] = $error;
             }
             $errorMessageString = implode("", $errorMessages);
-            
+
             throw new ValidationException($errorMessageString);
         }
         return false;
@@ -212,7 +215,7 @@ class Wallet
         ];
 
         if ($elements) {
-            $specification = array_filter($specification, fn($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
+            $specification = array_filter($specification, fn ($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
         }
 
         return (new PeerInputFilter($specification));

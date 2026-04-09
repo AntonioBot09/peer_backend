@@ -1,24 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\config\constants;
+
 use Fawaz\config\constants\ConstantsModeration;
 
-class ConstantsConfig
+/*
+
+
+
+DONT CHANGE/REMOVE ANY EXISING TYPES/NAMES
+
+all changes MUST be BACKWARDS COMPATITABLE
+ otherwise front will crash💥
+
+
+
+all changes through adding new fields
+
+*/
+
+class ConstantsConfig implements ConstantsConfigInterface
 {
-    public function getData() {
+    public function getData()
+    {
         return [
-            "POST" => $this::post(),
-            "COMMENT" => $this::comment(),
-            "USER" => $this::user(),
-            "CHAT" => $this::chat(),
-            "CONTACT" => $this::contact(),
-            "PAGING" => $this::paging(),
-            "WALLET" => $this::wallet(),
-            "WALLETT" => $this::wallett(),    
-            "ONBOARDING" => $this::onboarding(),
-            "DAILY_FREE" => $this::dailyFree(),
-            "TOKENOMICS" => $this::tokenomics(),
-            "MINTING" => $this::minting(),
+            "POST" => self::post(),
+            "COMMENT" => self::comment(),
+            "USER" => self::user(),
+            "CHAT" => self::chat(),
+            "CONTACT" => self::contact(),
+            "PAGING" => self::paging(),
+            "WALLET" => self::wallet(),
+            "WALLETT" => self::wallett(),
+            "ONBOARDING" => self::onboarding(),
+            "DAILY_FREE" => self::dailyFree(),
+            "TOKENOMICS" => self::tokenomics(),
+            "MINTING" => self::minting(),
+            "INPUT" => self::input(),
+            "PEER_SHOP" => self::shop(),
         ];
     }
     /**
@@ -26,7 +47,8 @@ class ConstantsConfig
      *     AVAILABLE_ONBOARDINGS: string[]
      * }
      */
-    public static function onboarding(): array {
+    public static function onboarding(): array
+    {
         return ConstantsConfig::ONBOARDING;
     }
     /**
@@ -34,12 +56,13 @@ class ConstantsConfig
      *     CONTENT: array{MIN_LENGTH: int, MAX_LENGTH: int}
      * }
      */
-    public static function comment() {
+    public static function comment()
+    {
         return ConstantsConfig::COMMENT;
     }
     /**
      * @return array{
-     *     TITLE: array{MIN_LENGTH: int, MAX_LENGTH: int, PATTERN: string},
+     *     TITLE: array{MIN_LENGTH: int, MAX_LENGTH: int},
      *     MEDIADESCRIPTION: array{MIN_LENGTH: int, MAX_LENGTH: int},
      *     COVER: array{MAX_COUNT: int, MIN_LENGTH: int, MAX_LENGTH: int},
      *     MEDIA: array{MIN_LENGTH: int, MAX_LENGTH: int},
@@ -54,10 +77,12 @@ class ConstantsConfig
      *             CREATE: int,
      *             SEARCH: int
      *         }
-     *     }
+     *     },
+     *     STATUS: array{PUBLISHED: int, ADVERTISED: int, ILLEGAL: int}
      * }
      */
-    public static function post(): array {
+    public static function post(): array
+    {
         return ConstantsConfig::POST;
     }
 
@@ -67,10 +92,12 @@ class ConstantsConfig
      *     TOKEN: array{LENGTH: int},
      *     NUMBERS: array{MIN: float, MAX: float},
      *     NUMBERSQ: array{MIN: int, MAX: float},
-     *     WHEREBY: array{MIN: int, MAX: int}
+     *     WHEREBY: array{MIN: int, MAX: int},
+     *     ACTIONS: array<string, int>
      * }
      */
-    public static function wallet() {
+    public static function wallet()
+    {
         return ConstantsConfig::WALLET;
     }
 
@@ -80,7 +107,8 @@ class ConstantsConfig
      *     LIQUIDITQ: array{MIN: int, MAX: float}
      * }
      */
-    public static function wallett() {
+    public static function wallett()
+    {
         return ConstantsConfig::WALLETT;
     }
 
@@ -94,10 +122,12 @@ class ConstantsConfig
      *     SLUG: array{MIN_LENGTH: int, MAX_LENGTH: int},
      *     LIQUIDITY: array{MIN_LENGTH: int, MAX_LENGTH: int},
      *     AVATAR: array{MAX_SIZE_MB: int},
-     *     TRANSACTION: array{MIN_TOKENS: int}
+     *     TRANSFER_MESSAGE: array{MIN_LENGTH: int, MAX_LENGTH: int, PATTERN_URL: string},
+     *     TRANSACTION: array{MIN_AMOUNT: float, MAX_DECIMALS: int}
      * }
      */
-    public static function user() {
+    public static function user()
+    {
         return ConstantsConfig::USER;
     }
 
@@ -110,27 +140,32 @@ class ConstantsConfig
      *     ACCESS_LEVEL: array{MIN: int, MAX: int, USER: int, ADMIN: int}
      * }
      */
-    public static function chat() {
+    public static function chat()
+    {
         return ConstantsConfig::CHAT;
     }
 
     /**
      * @return array{
-     *     NAME: array{MIN_LENGTH: int, MAX_LENGTH: int, PATTERN: string},
+     *     NAME: array{MIN_LENGTH: int, MAX_LENGTH: int},
      *     MESSAGE: array{MIN_LENGTH: int, MAX_LENGTH: int}
      * }
      */
-    public static function contact() {
+    public static function contact()
+    {
         return ConstantsConfig::CONTACT;
     }
 
     /**
      * @return array{
      *     OFFSET: array{MIN: int, MAX: int},
+     *     POST_OFFSET: array{MIN: int, MAX: int},
+     *     POST_LIMIT: array{MIN: int, MAX: int},
      *     LIMIT: array{MIN: int, MAX: int}
      * }
      */
-    public static function paging() {
+    public static function paging(): array
+    {
         return ConstantsConfig::PAGING;
     }
 
@@ -140,37 +175,80 @@ class ConstantsConfig
      *     TYPE: array{MIN_LENGTH: int, MAX_LENGTH: int}
      * }
      */
-    public static function transaction() {
+    public static function transaction()
+    {
         return ConstantsConfig::TRANSACTION;
     }
 
-    public static function contentFiltering() {
+    public static function contentFiltering()
+    {
         return ConstantsModeration::contentFiltering();
     }
 
     /**
      * @return array{
-     *     DAILY_FREE: array{ post: int, like: int, comment: int, dislike: int }
+     *     DAILY_FREE_ACTIONS: array{ post: int, like: int, comment: int, dislike: int }
      * }
      */
-    public static function dailyFree(): array {
+    public static function dailyFree(): array
+    {
         return ConstantsConfig::DAILY_FREE;
     }
 
+
     /**
      * @return array{
-     *     ACTION_TOKEN_PRICES: array{ post: float, like: float, dislike: float, comment: float },
-     *     ACTION_GEMS_RETURNS: array{ view: float, like: float, dislike: float, comment: float }
+     *     ACTION_TOKEN_PRICES: array{
+     *         post: float,
+     *         like: float,
+     *         dislike: float,
+     *         comment: float,
+     *         advertisementBasic: float,
+     *         advertisementPinned: float
+     *     },
+     *     ACTION_GEMS_RETURNS: array{
+     *         view: float,
+     *         like: float,
+     *         dislike: float,
+     *         comment: float
+     *     },
+     *     FEES: array{
+     *         INVITATION: float,
+     *         POOL: float,
+     *         PEER: float,
+     *         BURN: float
+     *     },
+     *     FEES_STRING: array{
+     *         INVITATION: string,
+     *         PEER: string,
+     *         BURN: string
+     *     },
      * }
      */
-    public static function tokenomics(): array {
+    public static function tokenomics(): array
+    {
         return ConstantsConfig::TOKENOMICS;
     }
     /**
      * @return array{ DAILY_NUMBER_TOKEN: float }
      */
-    public static function minting(): array {
+    public static function minting(): array
+    {
         return ConstantsConfig::MINTING;
+    }
+    /**
+     * @return array{
+     *     FORBID_CONTROL_CHARS_PATTERN: string
+     * }
+     */
+    public static function input(): array
+    {
+        return ConstantsConfig::INPUT;
+    }
+
+    public static function shop(): array
+    {
+        return ConstantsConfig::PEER_SHOP;
     }
 
     private const ONBOARDING = [
@@ -180,10 +258,10 @@ class ConstantsConfig
     ];
     private const DAILY_FREE = [
         'DAILY_FREE_ACTIONS' => [
-            'post'    => 1,  
-            'like'    => 3,  
-            'comment' => 4,  
-            'dislike' => 0,  
+            'post'    => 1,
+            'like'    => 3,
+            'comment' => 4,
+            'dislike' => 0,
         ],
     ];
     private const MINTING = [
@@ -192,46 +270,58 @@ class ConstantsConfig
 
     private const TOKENOMICS = [
         'ACTION_TOKEN_PRICES' => [
-            'post'    => 20.0,   
-            'like'    => 3.0,    
-            'dislike' => 3.0,    
-            'comment' => 1.0,    
+            'post'    => 20.0,
+            'like'    => 3.0,
+            'dislike' => 3.0,
+            'comment' => 1.0,
+            'advertisementBasic' => 50.0,
+            'advertisementPinned' => 200.0,
         ],
         'ACTION_GEMS_RETURNS' => [
-            'view'    => 0.25,  
+            'view'    => 0.25,
             'like'    => 5.0,
             'dislike' => -3.0,
             'comment' => 2.0,
+        ],
+        'FEES' => [
+            'INVITATION' => 0.01,
+            'POOL'       => 0.01,
+            'PEER'       => 0.02,
+            'BURN'       => 0.01,
+        ],
+        'FEES_STRING' => [
+            'INVITATION' => '0.01',
+            'PEER'       => '0.02',
+            'BURN'       => '0.01',
         ],
     ];
 
     private const COMMENT = [
         'CONTENT' => [
-            'MIN_LENGTH' => 2,
+            'MIN_LENGTH' => 1,
             'MAX_LENGTH' => 200,
-        ], 
+        ],
     ];
 
     private const TRANSACTION = [
         'ACTIONTYPE' => [
             'MIN_LENGTH' => 0,
             'MAX_LENGTH' => 200,
-        ], 
+        ],
         'TYPE' => [
-            'MIN_LENGTH' => 2,
+            'MIN_LENGTH' => 1,
             'MAX_LENGTH' => 63,
-        ], 
+        ],
     ];
-    
-    
+
+
     private const POST = [
         'TITLE' => [
-            'MIN_LENGTH' => 2,
+            'MIN_LENGTH' => 1,
             'MAX_LENGTH' => 63,
-            'PATTERN' => '^[a-zA-Z0-9_]+$'
         ],
         'MEDIADESCRIPTION' => [
-            'MIN_LENGTH' => 3,
+            'MIN_LENGTH' => 1,
             'MAX_LENGTH' => 500,
         ],
         'COVER' => [
@@ -262,11 +352,16 @@ class ConstantsConfig
         'TAG' => [
             'MIN_LENGTH' => 2,
             'MAX_LENGTH' => 53,
-            'PATTERN' => '[a-zA-Z]+',
+            'PATTERN' => '^[a-zA-Z0-9_]+$',
             'MAX_COUNT' => [
                 'CREATE' => 10,
                 'SEARCH' => 5,
             ],
+        ],
+        'STATUS' => [
+            'PUBLISHED' => 0,
+            'ADVERTISED' => 1,
+            'ILLEGAL' => 2,
         ],
     ];
 
@@ -290,6 +385,26 @@ class ConstantsConfig
         'WHEREBY' => [
             'MIN' => 1,
             'MAX' => 100,
+        ],
+        // Mapping of human-readable action names to action codes (whereby)
+        'ACTIONS' => [
+            'VIEW' => 1,
+            'LIKE' => 2,
+            'DISLIKE' => 3,
+            'COMMENT' => 4,
+            'POST' => 5,
+            'POSTINVESTBASIC' => 6,
+            'POSTINVESTPREMIUM' => 7,
+            'REPORT' => 8,
+            'INVITATION' => 11,
+            'OWNSHARED' => 12,
+            'OTHERSHARED' => 13,
+            'DIRECTDEBIT' => 14,
+            'CREDIT' => 15,
+            'TRANSFER' => 18,
+            'FREELIKE' => 30,
+            'FREECOMMENT' => 31,
+            'FREEPOST' => 32,
         ],
     ];
 
@@ -334,7 +449,6 @@ class ConstantsConfig
         'NAME' => [
             'MIN_LENGTH' => 3,
             'MAX_LENGTH' => 53,
-            'PATTERN' => '^[a-zA-Z]+$',
         ],
         'MESSAGE' => [
             'MIN_LENGTH' => 3,
@@ -347,25 +461,39 @@ class ConstantsConfig
             'MIN' => 0,
             'MAX' => 2147483647,
         ],
+        'POST_OFFSET' => [
+            'MIN' => 0,
+            'MAX' => 2147483647,
+        ],
+        'POST_LIMIT' => [
+            'MIN' => 0,
+            'MAX' => 20,
+        ],
         'LIMIT' => [
             'MIN' => 1,
             'MAX' => 20,
         ],
-    ];  
- 
+    ];
+    // ASCII control chars + zero-width Unicode chars
+    private const CONTROL_CHARS_PATTERN = '[\x00-\x08\x0B-\x1F\x7F\x{200B}\x{200C}\x{200D}\x{FEFF}\x{00A0}]';
+
+    private const INPUT = [
+        'FORBID_CONTROL_CHARS_PATTERN' => self::CONTROL_CHARS_PATTERN,
+    ];
+
     private const USER = [
         'PASSWORD' => [
             'MIN_LENGTH' => 8,
             'MAX_LENGTH' => 128,
-            'PATTERN' => '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$',
+            "PATTERN" => '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$'
         ],
         'USERNAME' => [
             'MIN_LENGTH' => 3,
             'MAX_LENGTH' => 23,
             'PATTERN' => '^[a-zA-Z0-9_-]+$',
-        ],  
+        ],
         'BIOGRAPHY' => [
-            'MIN_LENGTH' => 3,
+            'MIN_LENGTH' => 1,
             'MAX_LENGTH' => 5000,
         ],
         'PHONENUMBER' => [
@@ -388,8 +516,40 @@ class ConstantsConfig
         'AVATAR' => [
             'MAX_SIZE_MB' => 5,
         ],
+        'TRANSFER_MESSAGE' => [
+            'MIN_LENGTH' => 0,
+            'MAX_LENGTH' => 500,
+            'PATTERN_URL' => '(:\/\/|www\.)',
+        ],
         'TRANSACTION' => [
-            'MIN_TOKENS' => 10,
+            'MIN_AMOUNT' => 0.000001,
+            'MAX_DECIMALS' => 8,
+        ],
+    ];
+
+
+    private const PEER_SHOP = [
+        'ADDRESS' => [
+            'MIN_LENGTH' => 6,
+            'MAX_LENGTH' => 100,
+        ],
+        'CITY' => [
+            'MIN_LENGTH' => 2,
+            'MAX_LENGTH' => 100,
+        ],
+        'ZIPCODE' => [
+            'LENGTH' => 5
+        ],
+        'NAME' => [
+            'MIN_LENGTH' => 2,
+            'MAX_LENGTH' => 100,
+        ],
+        'COUNTRIES' => [
+            'Germany',
+        ],
+        'SIZE' => [
+            'MIN_LENGTH' => 1,
+            'MAX_LENGTH' => 100,
         ],
     ];
 }

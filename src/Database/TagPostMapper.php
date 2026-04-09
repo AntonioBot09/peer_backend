@@ -1,30 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\Database;
 
 use PDO;
 use Fawaz\App\TagPost;
-use Psr\Log\LoggerInterface;
+use Fawaz\Utils\PeerLoggerInterface;
 
 class TagPostMapper
 {
-    public function __construct(protected LoggerInterface $logger, protected PDO $db)
+    public function __construct(protected PeerLoggerInterface $logger, protected PDO $db)
     {
     }
 
     public function fetchAll(int $offset, int $limit): array
     {
-        $this->logger->info("TagPostMapper.fetchAll started");
+        $this->logger->debug("TagPostMapper.fetchAll started");
 
         $sql = "SELECT * FROM post_tags ORDER BY postid ASC LIMIT :limit OFFSET :offset";
 
         try {
             $stmt = $this->db->prepare($sql);
-            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
 
-            $results = array_map(fn($row) => new TagPost($row), $stmt->fetchAll(\PDO::FETCH_ASSOC));
+            $results = array_map(fn ($row) => new TagPost($row), $stmt->fetchAll(PDO::FETCH_ASSOC));
 
             $this->logger->info(
                 $results ? "Fetched postags successfully" : "No postags found",
@@ -43,14 +45,14 @@ class TagPostMapper
 
     public function loadByPostId(string $postid): array
     {
-        $this->logger->info("TagPostMapper.loadByPostId started");
+        $this->logger->debug("TagPostMapper.loadByPostId started");
 
         $sql = "SELECT * FROM post_tags WHERE postid = :postid";
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['postid' => $postid]);
         $results = [];
 
-        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $results[] = new TagPost($row);
         }
 
@@ -65,14 +67,14 @@ class TagPostMapper
 
     public function loadByTagId(string $tagid): array
     {
-        $this->logger->info("TagPostMapper.loadByTagId started");
+        $this->logger->debug("TagPostMapper.loadByTagId started");
 
         $sql = "SELECT * FROM post_tags WHERE tagid = :tagid";
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['tagid' => $tagid]);
         $results = [];
 
-        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $results[] = new TagPost($row);
         }
 
@@ -87,7 +89,7 @@ class TagPostMapper
 
     public function insert(TagPost $tagPost): TagPost
     {
-        $this->logger->info("TagPostMapper.insert started");
+        $this->logger->debug("TagPostMapper.insert started");
 
         $data = $tagPost->getArrayCopy();
 
@@ -102,7 +104,7 @@ class TagPostMapper
 
     public function deleteByPostId(string $postid): bool
     {
-        $this->logger->info("TagPostMapper.deleteByPostId started");
+        $this->logger->debug("TagPostMapper.deleteByPostId started");
 
         $query = "DELETE FROM post_tags WHERE postid = :postid";
         $stmt = $this->db->prepare($query);
@@ -120,7 +122,7 @@ class TagPostMapper
 
     public function deleteByTagId(string $tagid): bool
     {
-        $this->logger->info("TagPostMapper.deleteByTagId started");
+        $this->logger->debug("TagPostMapper.deleteByTagId started");
 
         $query = "DELETE FROM post_tags WHERE tagid = :tagid";
         $stmt = $this->db->prepare($query);

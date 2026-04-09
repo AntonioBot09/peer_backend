@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 use Monolog\Logger;
@@ -11,10 +12,11 @@ if (file_exists(__DIR__.'/../../.env')) {
 
 require __DIR__ . '/checker.php';
 
-return static function(string $appEnv) {
+return static function (string $appEnv) {
 
     $settings =  [
-        'base_url' => $_ENV['BASE_URL'] ?? '',
+        'media_server_url' => $_ENV['MEDIA_SERVER_URL'] ?? '',
+        'web_app_url' => $_ENV['WEB_APP_URL'] ?? '',
         'di_compilation_path' => __DIR__ . '/../../' . $_ENV['CONTAINER_PATH'],
         'display_error_details' => false,
         'log_errors' => true,
@@ -48,6 +50,7 @@ return static function(string $appEnv) {
             'pool' => $_ENV['LIQUIDITY_POOL'] ?? '',
             'burn' => $_ENV['BURN_ACCOUNT'] ?? '',
             'btcpool' => $_ENV['BTC_POOL'] ?? '',
+            'peerShop' => $_ENV['PEER_SHOP'] ?? '',
         ],
         'privateKeyPath' => __DIR__ . '/../../' . $_ENV['PRIVATE_KEY_PATH'],
         'publicKeyPath' => __DIR__ . '/../../' . $_ENV['PUBLIC_KEY_PATH'],
@@ -58,8 +61,8 @@ return static function(string $appEnv) {
         'rateLimiter' => $_ENV['LIMITER_RATE'],
         'timeLimiter' => $_ENV['LIMITER_TIME'],
         'rateLimiterpath' => __DIR__ . '/../../' . $_ENV['RATE_LIMITER'],
-		'mailapilink' => $_ENV['MAIL_API_LINK'],
-		'mailapikey' => $_ENV['MAIL_API_KEY']
+        'mailapilink' => $_ENV['MAIL_API_LINK'],
+        'mailapikey' => $_ENV['MAIL_API_KEY']
     ];
 
     if ($appEnv === 'DEVELOPMENT') {

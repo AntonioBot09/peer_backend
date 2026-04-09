@@ -1,21 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\Database;
 
+use Fawaz\config\constants\ConstantsConfig;
 use PDO;
 use Fawaz\App\DailyFree;
-use Psr\Log\LoggerInterface;
-use \InvalidArgumentException;
+use Fawaz\Utils\PeerLoggerInterface;
+use InvalidArgumentException;
+use PDOException;
 
 class DailyFreeMapper
 {
-    public function __construct(protected LoggerInterface $logger, protected PDO $db)
+    public function __construct(protected PeerLoggerInterface $logger, protected PDO $db)
     {
     }
 
     public function insert(DailyFree $user): DailyFree|false
     {
-        $this->logger->info("DailyFree.insert started");
+        $this->logger->debug("DailyFree.insert started");
 
         try {
             $data = $user->getArrayCopy();
@@ -23,19 +27,19 @@ class DailyFreeMapper
             $query = "INSERT INTO dailyfree (userid, liken, comments, posten, createdat) VALUES (:userid, :liken, :comments, :posten, :createdat)";
 
             $stmt = $this->db->prepare($query);
-            $stmt->bindValue(':userid', $data['userid'], \PDO::PARAM_STR);
-            $stmt->bindValue(':liken', $data['liken'], \PDO::PARAM_INT);
-            $stmt->bindValue(':comments', $data['comments'], \PDO::PARAM_INT);
-            $stmt->bindValue(':posten', $data['posten'], \PDO::PARAM_INT);
-            $stmt->bindValue(':createdat', $data['createdat'], \PDO::PARAM_STR);
+            $stmt->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
+            $stmt->bindValue(':liken', $data['liken'], PDO::PARAM_INT);
+            $stmt->bindValue(':comments', $data['comments'], PDO::PARAM_INT);
+            $stmt->bindValue(':posten', $data['posten'], PDO::PARAM_INT);
+            $stmt->bindValue(':createdat', $data['createdat'], PDO::PARAM_STR);
             $stmt->execute();
 
             $this->logger->info("Inserted new record into database", ['record' => $data]);
 
             return new DailyFree($data);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             if ($e->getCode() === '23505') {
-                $this->logger->warning("Duplicate record detected", [
+                $this->logger->error("Duplicate record detected", [
                     'userid' => $user->getArrayCopy()['userid'],
                     'error' => $e->getMessage(),
                 ]);
@@ -58,7 +62,7 @@ class DailyFreeMapper
 
     public function update(DailyFree $user): DailyFree|false
     {
-        $this->logger->info("DailyFree.update started");
+        $this->logger->debug("DailyFree.update started");
 
         try {
             $data = $user->getArrayCopy();
@@ -66,18 +70,18 @@ class DailyFreeMapper
             $query = "UPDATE dailyfree SET liken = :liken, comments = :comments, posten = :posten, createdat = :createdat WHERE userid = :userid";
 
             $stmt = $this->db->prepare($query);
-            $stmt->bindValue(':liken', $data['liken'], \PDO::PARAM_INT);
-            $stmt->bindValue(':comments', $data['comments'], \PDO::PARAM_INT);
-            $stmt->bindValue(':posten', $data['posten'], \PDO::PARAM_INT);
-            $stmt->bindValue(':createdat', $data['createdat'], \PDO::PARAM_STR);
-            $stmt->bindValue(':userid', $data['userid'], \PDO::PARAM_STR);
+            $stmt->bindValue(':liken', $data['liken'], PDO::PARAM_INT);
+            $stmt->bindValue(':comments', $data['comments'], PDO::PARAM_INT);
+            $stmt->bindValue(':posten', $data['posten'], PDO::PARAM_INT);
+            $stmt->bindValue(':createdat', $data['createdat'], PDO::PARAM_STR);
+            $stmt->bindValue(':userid', $data['userid'], PDO::PARAM_STR);
 
             $stmt->execute();
 
             $this->logger->info("User updated successfully in database", ['user' => $data]);
 
             return new DailyFree($data);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->logger->error("Database error during user update", [
                 'error' => $e->getMessage(),
                 'user' => $user->getArrayCopy(),
@@ -94,10 +98,12 @@ class DailyFreeMapper
 
     public function getUserDailyUsage(string $userId, int $artType): int
     {
+        $actions = ConstantsConfig::wallet()['ACTIONS'];
+
         $columnMap = [
-            LIKE_ => 'liken',
-            COMMENT_ => 'comments',
-            POST_ => 'posten',
+            $actions['LIKE'] => 'liken',
+            $actions['COMMENT'] => 'comments',
+            $actions['POST'] => 'posten',
         ];
 
         $column = $columnMap[$artType] ?? null;
@@ -113,26 +119,26 @@ class DailyFreeMapper
                       AND createdat::date = CURRENT_DATE";
 
             $stmt = $this->db->prepare($query);
-            $stmt->bindValue(':userId', $userId, \PDO::PARAM_STR);
+            $stmt->bindValue(':userId', $userId, PDO::PARAM_STR);
             $stmt->execute();
 
-            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
             return (int)($result['usage'] ?? 0);
 
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->logger->error('Database error in getUserDailyUsage', ['exception' => $e->getMessage()]);
-            
+
             return 0;
         } catch (\Throwable $e) {
             $this->logger->error('Unexpected error in getUserDailyUsage', ['exception' => $e->getMessage()]);
-            return 0; 
+            return 0;
         }
     }
 
     public function getUserDailyAvailability(string $userId): array
     {
-        $this->logger->info('DailyFreeMapper.getUserDailyAvailability started', ['userId' => $userId]);
+        $this->logger->debug('DailyFreeMapper.getUserDailyAvailability started', ['userId' => $userId]);
 
         $dailyLimits = [
             'liken' => 3,
@@ -153,25 +159,25 @@ class DailyFreeMapper
                       AND createdat::date = CURRENT_DATE";
 
             $stmt = $this->db->prepare($query);
-            $stmt->bindValue(':userId', $userId, \PDO::PARAM_STR);
+            $stmt->bindValue(':userId', $userId, PDO::PARAM_STR);
             $stmt->execute();
 
-            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$result) {
-                return array_map(fn($column, $label) => [
+                return array_map(fn ($column, $label) => [
                     'name' => $label,
                     'used' => 0,
                     'available' => $dailyLimits[$column],
                 ], array_keys($columnMap), $columnMap);
             }
 
-            return array_map(fn($column, $label) => [
+            return array_map(fn ($column, $label) => [
                 'name' => $label,
                 'used' => (int)($result[$column] ?? 0),
                 'available' => max($dailyLimits[$column] - (int)($result[$column] ?? 0), 0),
             ], array_keys($columnMap), $columnMap);
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             $this->logger->error('Database error in getUserDailyAvailability', [
                 'userId' => $userId,
                 'exception' => $e->getMessage(),
@@ -188,12 +194,13 @@ class DailyFreeMapper
 
     public function incrementUserDailyUsage(string $userId, int $artType): bool
     {
-        $this->logger->info('DailyFreeMapper.incrementUserDailyUsage started', ['userId' => $userId, 'artType' => $artType]);
+        $this->logger->debug('DailyFreeMapper.incrementUserDailyUsage started', ['userId' => $userId, 'artType' => $artType]);
 
+        $actions = ConstantsConfig::wallet()['ACTIONS'];
         $columnMap = [
-            LIKE_ => 'liken',
-            COMMENT_ => 'comments',
-            POST_ => 'posten',
+            $actions['LIKE'] => 'liken',
+            $actions['COMMENT'] => 'comments',
+            $actions['POST'] => 'posten',
         ];
 
         if (!isset($columnMap[$artType])) {
@@ -201,46 +208,36 @@ class DailyFreeMapper
             throw new InvalidArgumentException('Invalid art type provided.');
         }
 
-        $column = $columnMap[$artType];
+        $query = "
+            INSERT INTO dailyfree (userid, liken, comments, posten, createdat)
+            VALUES (:userId, :liken, :comments, :posten, NOW())
+            ON CONFLICT (userid) 
+            DO UPDATE 
+            SET 
+                liken = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.liken ELSE 0 END + :liken,
+                comments = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.comments ELSE 0 END + :comments,
+                posten = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.posten ELSE 0 END + :posten,
+                createdat = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.createdat ELSE NOW() END
+        ";
 
-        try {
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':userId', $userId, \PDO::PARAM_STR);
+        $stmt->bindValue(':liken', $artType === $actions['LIKE'] ? 1 : 0, \PDO::PARAM_INT);
+        $stmt->bindValue(':comments', $artType === $actions['COMMENT'] ? 1 : 0, \PDO::PARAM_INT);
+        $stmt->bindValue(':posten', $artType === $actions['POST'] ? 1 : 0, \PDO::PARAM_INT);
 
-            $query = "
-                INSERT INTO dailyfree (userid, liken, comments, posten, createdat)
-                VALUES (:userId, :liken, :comments, :posten, NOW())
-                ON CONFLICT (userid) 
-                DO UPDATE 
-                SET 
-                    liken = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.liken ELSE 0 END + :liken,
-                    comments = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.comments ELSE 0 END + :comments,
-                    posten = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.posten ELSE 0 END + :posten,
-                    createdat = CASE WHEN dailyfree.createdat::date = CURRENT_DATE THEN dailyfree.createdat ELSE NOW() END
-            ";
+        $success = $stmt->execute();
 
-            $stmt = $this->db->prepare($query);
-            $stmt->bindValue(':userId', $userId, \PDO::PARAM_STR);
-            $stmt->bindValue(':liken', $artType === LIKE_ ? 1 : 0, \PDO::PARAM_INT);
-            $stmt->bindValue(':comments', $artType === COMMENT_ ? 1 : 0, \PDO::PARAM_INT);
-            $stmt->bindValue(':posten', $artType === POST_ ? 1 : 0, \PDO::PARAM_INT);
-
-            $success = $stmt->execute();
-
-            return $success;
-        } catch (\PDOException $e) {
-            $this->logger->error('Database error in incrementUserDailyUsage', ['exception' => $e->getMessage()]);
-            return false;
-        } catch (\Exception $e) {
-            $this->logger->error('Unexpected error in incrementUserDailyUsage', ['exception' => $e->getMessage()]);
-            return false;
-        }
+        return $success;
     }
 
     public function incrementUserDailyUsagee(string $userId, int $artType): bool
     {
+        $actions = ConstantsConfig::wallet()['ACTIONS'];
         $columnMap = [
-            LIKE_ => 'liken',
-            COMMENT_ => 'comments',
-            POST_ => 'posten',
+            $actions['LIKE'] => 'liken',
+            $actions['COMMENT'] => 'comments',
+            $actions['POST'] => 'posten',
         ];
 
         $column = $columnMap[$artType] ?? null;
@@ -263,10 +260,10 @@ class DailyFreeMapper
             ";
 
             $stmt = $this->db->prepare($updateQuery);
-            $stmt->bindValue(':userId', $userId, \PDO::PARAM_STR);
-            $stmt->bindValue(':liken', $artType === LIKE_ ? 1 : 0, \PDO::PARAM_INT);
-            $stmt->bindValue(':comments', $artType === COMMENT_ ? 1 : 0, \PDO::PARAM_INT);
-            $stmt->bindValue(':posten', $artType === POST_ ? 1 : 0, \PDO::PARAM_INT);
+            $stmt->bindValue(':userId', $userId, PDO::PARAM_STR);
+            $stmt->bindValue(':liken', $artType === $actions['LIKE'] ? 1 : 0, PDO::PARAM_INT);
+            $stmt->bindValue(':comments', $artType === $actions['COMMENT'] ? 1 : 0, PDO::PARAM_INT);
+            $stmt->bindValue(':posten', $artType === $actions['POST'] ? 1 : 0, PDO::PARAM_INT);
 
             return $stmt->execute();
         } catch (\Exception $e) {

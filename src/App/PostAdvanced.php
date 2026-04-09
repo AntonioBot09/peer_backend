@@ -1,12 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\App;
 
 use DateTime;
 use Fawaz\Filter\PeerInputFilter;
 use Fawaz\config\constants\ConstantsConfig;
+use Fawaz\config\SettingsConfig;
+use Fawaz\Services\ContentFiltering\Replaceables\PostReplaceable;
 
-class PostAdvanced
+class PostAdvanced implements PostReplaceable
 {
     protected string $postid;
     protected string $userid;
@@ -23,6 +27,7 @@ class PostAdvanced
     protected ?int $amountcomments;
     protected ?int $amountposts;
     protected ?int $amounttrending;
+    protected ?int $amountreports;
     protected ?bool $isliked;
     protected ?bool $isviewed;
     protected ?bool $isreported;
@@ -30,10 +35,14 @@ class PostAdvanced
     protected ?bool $issaved;
     protected ?bool $isfollowed;
     protected ?bool $isfollowing;
+    protected ?bool $isfriend;
     protected string $createdat;
     protected ?array $tags = [];
     protected ?array $user = [];
     protected ?array $comments = [];
+    protected ?int $activeReports = null;
+    protected string $visibilityStatus;
+    protected string $visibilityStatusForUser;
 
     // Constructor
     public function __construct(array $data = [], array $elements = [], bool $validate = true)
@@ -56,6 +65,7 @@ class PostAdvanced
         $this->amountcomments = $data['amountcomments'] ?? 0;
         $this->amountposts = $data['amountposts'] ?? 0;
         $this->amounttrending = $data['amounttrending'] ?? 0;
+        $this->amountreports = $data['amountreports'] ?? 0;
         $this->isliked = $data['isliked'] ?? false;
         $this->isviewed = $data['isviewed'] ?? false;
         $this->isreported = $data['isreported'] ?? false;
@@ -63,8 +73,12 @@ class PostAdvanced
         $this->issaved = $data['issaved'] ?? false;
         $this->isfollowed = $data['isfollowed'] ?? false;
         $this->isfollowing = $data['isfollowing'] ?? false;
+        $this->isfriend = $data['isfriend'] ?? false;
         $this->url = $this->getPostUrl();
-        $this->createdat = $data['createdat'] ?? (new DateTime())->format('Y-m-d H:i:s.u');
+        $this->createdat = $data['createdat'] ?? new DateTime()->format('Y-m-d H:i:s.u');
+        $this->activeReports = $data['reports'] ?? null;
+        $this->visibilityStatus = $data['visibility_status'] ?? 'normal';
+        $this->visibilityStatusForUser = $data['visibility_status'] ?? 'normal';
         $this->tags = isset($data['tags']) && is_array($data['tags']) ? $data['tags'] : [];
         $this->user = isset($data['user']) && is_array($data['user']) ? $data['user'] : [];
         $this->comments = isset($data['comments']) && is_array($data['comments']) ? $data['comments'] : [];
@@ -89,6 +103,7 @@ class PostAdvanced
             'amountcomments' => $this->amountcomments,
             'amountposts' => $this->amountposts,
             'amounttrending' => $this->amounttrending,
+            'amountreports' => $this->amountreports,
             'isliked' => $this->isliked,
             'isviewed' => $this->isviewed,
             'isreported' => $this->isreported,
@@ -96,8 +111,13 @@ class PostAdvanced
             'issaved' => $this->issaved,
             'isfollowed' => $this->isfollowed,
             'isfollowing' => $this->isfollowing,
+            'isfriend' => $this->isfriend,
             'createdat' => $this->createdat,
             'tags' => $this->tags, // Include tags
+            'visibility_status' => $this->visibilityStatusForUser,
+            'reports' => $this->activeReports,
+            'hasActiveReports' => $this->hasActiveReports(),
+            'isHiddenForUsers' => $this->isHiddenForUsers(),
             'user' => $this->user,
             'comments' => $this->comments,
         ];
@@ -115,6 +135,21 @@ class PostAdvanced
         $this->tags = $tags;
     }
 
+    // HasUser interface
+    public function getUser(): array
+    {
+        return $this->user ?? [];
+    }
+    public function getUserid(): string
+    {
+        return $this->userid;
+    }
+
+    public function setUser(array $user): void
+    {
+        $this->user = $user;
+    }
+
     public function getPostId(): string
     {
         return $this->postid;
@@ -124,7 +159,7 @@ class PostAdvanced
     {
         return $this->title;
     }
-    
+
     public function setTitle(string $title): void
     {
         $this->title = $title;
@@ -137,9 +172,10 @@ class PostAdvanced
     {
         $this->mediadescription = $mediadescription;
     }
-    public function getUserId(): string
+    // PostReplaceable requires setDescription
+    public function setDescription(string $descriptionConfig): void
     {
-        return $this->userid;
+        $this->mediadescription = $descriptionConfig;
     }
 
     public function getFeedId(): string
@@ -155,14 +191,58 @@ class PostAdvanced
     {
         $this->media = $media;
     }
+    public function setCover(string $media): void
+    {
+        $this->cover = $media;
+    }
 
     public function getContentType(): string
     {
         return $this->contenttype;
     }
+    public function setContentType(string $contentType): void
+    {
+        $this->contenttype = $contentType;
+    }
+    // Capabilities for content filtering
+    public function visibilityStatus(): string
+    {
+        return $this->visibilityStatusForUser;
+    }
 
-    // Validation and Array Filtering methods
-    public function validate(array $data, array $elements = []): array|false
+    public function setVisibilityStatus(string $status): void
+    {
+        $this->visibilityStatusForUser = $status;
+    }
+
+    public function getActiveReports(): ?int
+    {
+        return $this->activeReports;
+    }
+
+    public function hasActiveReports(): bool
+    {
+        return (int)($this->activeReports ?? 0) > 0;
+    }
+
+    // Computed property: hidden for users when hidden or many reports
+    public function isHiddenForUsers(): bool
+    {
+        $reports = (int)($this->activeReports ?? 0);
+        return $this->visibilityStatus === 'hidden' || $reports > 4;
+    }
+
+    public function getPostUrl(): string
+    {
+        if (empty($this->postid)) {
+            return '';
+        }
+        return SettingsConfig::load()->webAppUrl . '/post/' . $this->postid;
+        // return getenv('WEB_APP_URL') . '/post/' . $this->postid;
+    }
+
+    // Renew Validation and Array Filtering methods
+    public function validate(array $data, array $elements = []): array
     {
         $inputFilter = $this->createInputFilter($elements);
         $inputFilter->setData($data);
@@ -172,17 +252,15 @@ class PostAdvanced
         }
 
         $validationErrors = $inputFilter->getMessages();
+        $errorMessages = [];
 
         foreach ($validationErrors as $field => $errors) {
-            $errorMessages = [];
             foreach ($errors as $error) {
                 $errorMessages[] = $error;
             }
-            $errorMessageString = implode("", $errorMessages);
-            
-            throw new ValidationException($errorMessageString);
         }
-        return false;
+
+        throw new ValidationException(implode("", $errorMessages));
     }
 
     protected function createInputFilter(array $elements = []): PeerInputFilter
@@ -312,6 +390,10 @@ class PostAdvanced
                 'required' => false,
                 'filters' => [['name' => 'Boolean']],
             ],
+            'isfriend' => [
+                'required' => false,
+                'filters' => [['name' => 'Boolean']],
+            ],
             'tags' => [
                 'required' => false,
                 'validators' => [
@@ -329,8 +411,8 @@ class PostAdvanced
             'createdat' => [
                 'required' => false,
                 'validators' => [
-                    ['name' => 'Date', 'options' => ['format' => 'Y-m-d H:i:s.u']],
-                    ['name' => 'LessThan', 'options' => ['max' => (new DateTime())->format('Y-m-d H:i:s.u'), 'inclusive' => true]],
+                   ['name' => 'Date', 'options' => ['format' => 'Y-m-d H:i:s.u']],
+                   ['name' => 'LessThan', 'options' => ['max' => new DateTime()->format('Y-m-d H:i:s.u'), 'inclusive' => true]],
                 ],
             ],
             'user' => [
@@ -348,17 +430,9 @@ class PostAdvanced
         ];
 
         if ($elements) {
-            $specification = array_filter($specification, fn($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
+            $specification = array_filter($specification, fn ($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
         }
 
         return (new PeerInputFilter($specification));
-    }
-    
-    public function getPostUrl(): string
-    {
-        if(empty($this->postid)) {
-            return '';
-        }
-        return $_ENV['WEB_APP_URL'] . '/post/' . $this->postid;
     }
 }

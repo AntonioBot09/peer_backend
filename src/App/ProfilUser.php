@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\App;
 
 use DateTime;
@@ -14,6 +16,8 @@ class ProfilUser
     protected ?string $img;
     protected ?bool $isfollowed;
     protected ?bool $isfollowing;
+    protected ?bool $iFollowThisUser;
+    protected ?bool $thisUserFollowsMe;
     protected int $status;
 
     // Constructor
@@ -29,11 +33,8 @@ class ProfilUser
         $this->img = $data['img'] ?? '';
         $this->isfollowed = $data['isfollowed'] ?? false;
         $this->isfollowing = $data['isfollowing'] ?? false;
-
-        if(isset($data['status']) && $data['status'] == 6){
-            $this->username = 'Deleted_Account';
-            $this->img = '/profile/14ce7fba-2bee-4607-86a7-b098a3d62a78.jpg'; // NEEDs to replace with Delete User Image on Production
-        }
+        $this->iFollowThisUser = $data['iFollowThisUser'] ?? $this->isfollowing ?? false;
+        $this->thisUserFollowsMe = $data['thisUserFollowsMe'] ?? $this->isfollowed ?? false;
     }
 
     // Array Copy methods
@@ -46,6 +47,8 @@ class ProfilUser
             'img' => $this->img,
             'isfollowed' => $this->isfollowed,
             'isfollowing' => $this->isfollowing,
+            'iFollowThisUser' => $this->iFollowThisUser,
+            'thisUserFollowsMe' => $this->thisUserFollowsMe,
         ];
         return $att;
     }
@@ -98,13 +101,13 @@ class ProfilUser
 
         $validationErrors = $inputFilter->getMessages();
 
-        foreach ($validationErrors as $field => $errors) {
+        foreach ($validationErrors as $errors) {
             $errorMessages = [];
             foreach ($errors as $error) {
                 $errorMessages[] = $error;
             }
             $errorMessageString = implode("", $errorMessages);
-            
+
             throw new ValidationException($errorMessageString);
         }
         return false;
@@ -130,7 +133,7 @@ class ProfilUser
                 'filters' => [['name' => 'ToInt']],
                 'validators' => [
                     ['name' => 'validateIntRange', 'options' => [
-                        'min' => $userConfig['SLUG']['MIN_LENGTH'], 
+                        'min' => $userConfig['SLUG']['MIN_LENGTH'],
                         'max' => $userConfig['SLUG']['MAX_LENGTH']
                         ]],
                 ],
@@ -154,10 +157,18 @@ class ProfilUser
                 'required' => false,
                 'filters' => [['name' => 'Boolean']],
             ],
+            'iFollowThisUser' => [
+                'required' => false,
+                'filters' => [['name' => 'Boolean']],
+            ],
+            'thisUserFollowsMe' => [
+                'required' => false,
+                'filters' => [['name' => 'Boolean']],
+            ],
         ];
 
         if ($elements) {
-            $specification = array_filter($specification, fn($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
+            $specification = array_filter($specification, fn ($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
         }
 
         return (new PeerInputFilter($specification));

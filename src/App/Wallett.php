@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\App;
 
 use DateTime;
@@ -24,8 +26,8 @@ class Wallett
         $this->userid = $data['userid'] ?? '';
         $this->liquidity = $data['liquidity'] ?? 0.0;
         $this->liquiditq = $data['liquiditq'] ?? 0;
-        $this->updatedat = $data['updatedat'] ?? (new DateTime())->format('Y-m-d H:i:s.u');
-        $this->createdat = $data['createdat'] ?? (new DateTime())->format('Y-m-d H:i:s.u');
+        $this->updatedat = $data['updatedat'] ?? new DateTime()->format('Y-m-d H:i:s.u');
+        $this->createdat = $data['createdat'] ?? new DateTime()->format('Y-m-d H:i:s.u');
     }
 
     // Array Copy methods
@@ -89,7 +91,7 @@ class Wallett
 
     public function setUpdatedAt(): void
     {
-        $this->updatedat = (new DateTime())->format('Y-m-d H:i:s.u');
+        $this->updatedat = new DateTime()->format('Y-m-d H:i:s.u');
     }
 
     // Validation and Array Filtering methods (Unchanged)
@@ -104,13 +106,13 @@ class Wallett
 
         $validationErrors = $inputFilter->getMessages();
 
-        foreach ($validationErrors as $field => $errors) {
+        foreach ($validationErrors as $errors) {
             $errorMessages = [];
             foreach ($errors as $error) {
                 $errorMessages[] = $error;
             }
             $errorMessageString = implode("", $errorMessages);
-            
+
             throw new ValidationException($errorMessageString);
         }
         return false;
@@ -153,7 +155,7 @@ class Wallett
         ];
 
         if ($elements) {
-            $specification = array_filter($specification, fn($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
+            $specification = array_filter($specification, fn ($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
         }
 
         return (new PeerInputFilter($specification));

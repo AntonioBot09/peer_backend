@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Fawaz\App;
 
 use DateTime;
@@ -22,10 +24,10 @@ class UserPreferences
         }
         $this->userid = $data['userid'] ?? '';
         $this->contentFilteringSeverityLevel = $data['contentFilteringSeverityLevel'];
-        $this->updatedat = $data['updatedat'] ?? (new DateTime())->format('Y-m-d H:i:s.u');
+        $this->updatedat = $data['updatedat'] ?? new DateTime()->format('Y-m-d H:i:s.u');
 
         $raw = $data['onboardingsWereShown'] ?? [];
-        if (is_array($raw)){
+        if (is_array($raw)) {
             $this->onboardingsWereShown = $raw;
         } else {
             $this->onboardingsWereShown = JsonHelper::decode($raw) ?? [];
@@ -62,7 +64,7 @@ class UserPreferences
 
     public function setUpdatedAt(): void
     {
-        $this->updatedat = (new DateTime())->format('Y-m-d H:i:s.u');
+        $this->updatedat = new DateTime()->format('Y-m-d H:i:s.u');
     }
 
     public function setContentFilteringSeverityLevel(int $contentFilteringSeverityLevel): void
@@ -79,7 +81,7 @@ class UserPreferences
     {
         $this->onboardingsWereShown = $onboardings;
     }
-    
+
     // Validation and Array Filtering methods
     public function validate(array $data, array $elements = []): array
     {
@@ -92,13 +94,13 @@ class UserPreferences
 
         $validationErrors = $inputFilter->getMessages();
 
-        foreach ($validationErrors as $field => $errors) {
+        foreach ($validationErrors as $errors) {
             $errorMessages = [];
             foreach ($errors as $error) {
                 $errorMessages[] = $error;
             }
             $errorMessageString = implode("", $errorMessages);
-            
+
             throw new ValidationException($errorMessageString);
         }
         return [];
@@ -131,7 +133,7 @@ class UserPreferences
         ];
 
         if ($elements) {
-            $specification = array_filter($specification, fn($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
+            $specification = array_filter($specification, fn ($key) => in_array($key, $elements, true), ARRAY_FILTER_USE_KEY);
         }
 
         return (new PeerInputFilter($specification));

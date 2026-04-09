@@ -5,8 +5,9 @@ namespace Fawaz\App;
 use Fawaz\Database\UserMapper;
 use Fawaz\Database\WalletMapper;
 use Fawaz\Services\Mailer;
+use Fawaz\Services\TokenTransfer\Strategies\UserToUserTransferStrategy;
+use Fawaz\Utils\PeerLoggerInterface;
 use Fawaz\Utils\ResponseHelper;
-use Psr\Log\LoggerInterface;
 use Fawaz\Database\PeerTokenMapper;
 
 class AlphaMintService
@@ -15,12 +16,12 @@ class AlphaMintService
     protected ?string $currentUserId = null;
 
     public function __construct(
-        protected LoggerInterface $logger,
+        protected PeerLoggerInterface $logger,
         protected UserMapper $userMapper,
         protected UserService $userService,
         protected WalletMapper $walletMapper,
         protected PeerTokenMapper $peerTokenMapper,
-		protected Mailer $mailer
+        protected Mailer $mailer
     ) {
     }
 
@@ -40,7 +41,7 @@ class AlphaMintService
 
     /**
      * Run Alpha Minting Process
-     * 
+     *
      * This function is used to mint Alpha Tokens for the Alpha Mint account and
      * distribute them to the Alpha Users as per the Alpha_tokens_to_Peer_tokens.json file
      */
@@ -55,9 +56,9 @@ class AlphaMintService
         try {
 
             $alphaUserAc = $this->userMapper->loadByEmail('alpha_mint@peerapp.de');
-            
+
             // If Alpha Mint account does not exist, create it
-            if(!$alphaUserAc){
+            if (!$alphaUserAc) {
                 $alphaMintAccount = [
                     'email' => 'alpha_mint@peerapp.de',
                     'password' => $_ENV['ALPA_MINT_PASSWORD'],
@@ -70,14 +71,14 @@ class AlphaMintService
             }
 
 
-            if($alphaUserAc && $alphaUserAc->getUserId()){
+            if ($alphaUserAc && $alphaUserAc->getUserId()) {
 
                 $mintUserId = $alphaUserAc->getUserId();
-                
+
                 // Get Alpha Users from Alpha_tokens_to_Peer_tokens.json file
                 $alphaUsers = json_decode(file_get_contents(__DIR__ . '/../../runtime-data/Alpha_tokens_to_Peer_tokens.json'), true);
 
-                if(!$alphaUsers || !is_array($alphaUsers)) {
+                if (!$alphaUsers || !is_array($alphaUsers)) {
                     $this->logger->error('Failed to load alpha users data from JSON file');
                     return self::respondWithError(41020);
                 }
@@ -85,31 +86,41 @@ class AlphaMintService
                 $excluedUsers = [];
                 foreach ($alphaUsers as $key => $usr) {
                     $userData = $this->userMapper->checkIfNameAndSlugExist($usr['peer_username'], $usr['peer_app_slug']);
-                    if($userData){
+                    if ($userData) {
                         $userCounts++;
-                    }else{
+                    } else {
                         $excluedUsers[] = $usr['peer_username'];
                     }
                 }
 
-                if(count($alphaUsers) == $userCounts){
+                if (count($alphaUsers) == $userCounts) {
                     $totalAlphaUserMinted = 0;
                     foreach ($alphaUsers as $key => $usr) {
                         $userData = $this->userMapper->getUserByNameAndSlug($usr['peer_username'], $usr['peer_app_slug']);
 
-                        if($userData){
+                        if ($userData) {
                             $receipientUserId = $userData->getUserId();
-                            $args = [
-                                'recipient' => $receipientUserId,
-                                'numberoftokens' => $usr['alpha_user_tokens'],
-                                'message' => 'Alpha Token Migration',
-                            ];
-                            $this->peerTokenMapper->transferToken($mintUserId, $args);
+                            // Skip duplicate transfer if same user and amount already credited
+                            $amount = (string)$usr['alpha_user_tokens'];
+                            if ($this->peerTokenMapper->hasExistingTransfer($mintUserId, $receipientUserId, $amount)) {
+                                $this->logger->info('Duplicate alpha mint transfer skipped', [
+                                    'recipient' => $receipientUserId,
+                                    'amount' => $amount,
+                                ]);
+                                continue;
+                            }
+                            $this->peerTokenMapper->transferToken(
+                                $amount,
+                                new UserToUserTransferStrategy(),
+                                $alphaUserAc,
+                                $userData,
+                                'Alpha Token Migration',
+                            );
 
                             $totalAlphaUserMinted++;
                         }
                     }
-                }else{
+                } else {
                     $this->userMapper->delete($mintUserId);
                     return [
                         'status' => 'error: Some users not found' . ' - ' . implode(', ', $excluedUsers),
@@ -122,7 +133,7 @@ class AlphaMintService
                     'ResponseCode' => 200,
                 ];
             }
-            
+
             return [
                 'status' => 'error',
                 'ResponseCode' => 500
