@@ -167,7 +167,7 @@ class CommentMapper
 
         $results = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $this->logger->info("Fetched comments for post counter", ['row' => $row]);
+            $this->logger->debug("Fetched comments for post counter", ['row' => $row]);
             // here to decide if to replace comment/user content or not
 
             $results[] = new CommentAdvanced([
@@ -184,10 +184,10 @@ class CommentMapper
                 'createdat' => $row['createdat'],
                 'visibility_status' => $row['visibility_status'],
                 'reports' => $row['comment_reports']
-            ]);
+            ], [], false);
         }
 
-        $this->logger->info("Fetched comments for post", ['count' => count($results)]);
+        $this->logger->debug("Fetched comments for post", ['count' => count($results)]);
 
         return $results;
     }
@@ -301,7 +301,7 @@ class CommentMapper
                 'visibility_status' => $row['visibility_status'],
             ];
             $row['userstatus'] = $row['status'];
-            $subComment = new CommentAdvanced($row);
+            $subComment = new CommentAdvanced($row, [], false);
             $subComments[] = $subComment->getArrayCopy();
         }
 
@@ -422,10 +422,10 @@ class CommentMapper
                         'isfollowing' => (bool) $row['isfollowing'],
                         'visibility_status' => $row['user_visibility_status'],
                     ],
-                ]);
+                ], [], false);
             }, $results);
 
-            $this->logger->info("Fetched comments for post", ['count' => count($comments)]);
+            $this->logger->debug("Fetched comments for post", ['count' => count($comments)]);
 
             if (empty($results)) {
                 return $results;

@@ -1,0 +1,228 @@
+{
+  "timestamp": "2026-04-09T17:01:18.443535",
+  "duration_seconds": 0.0,
+  "summary": {
+    "total_tests": 6,
+    "total_vulnerabilities": 9,
+    "critical_vulnerabilities": 3,
+    "high_vulnerabilities": 5,
+    "security_score": 0,
+    "overall_status": "\u274c POOR"
+  },
+  "test_results": [
+    {
+      "test": "SQL Injection Tests",
+      "status": "VULNERABLE",
+      "findings": 3,
+      "details": [
+        "Vulnerable to: Basic SQL injection",
+        "Vulnerable to: Union-based injection",
+        "Vulnerable to: Authentication bypass attempt"
+      ],
+      "recommendations": [
+        "Use parameterized queries/prepared statements",
+        "Implement input validation and sanitization",
+        "Use ORM with built-in SQL injection protection",
+        "Apply principle of least privilege to database users",
+        "Implement WAF (Web Application Firewall)"
+      ]
+    },
+    {
+      "test": "XSS Vulnerability Tests",
+      "status": "VULNERABLE",
+      "findings": 3,
+      "details": [
+        "Vulnerable to: Basic script injection",
+        "Vulnerable to: Image with onerror handler",
+        "Vulnerable to: JavaScript URI"
+      ],
+      "recommendations": [
+        "Implement output encoding for all user-generated content",
+        "Use Content Security Policy (CSP) headers",
+        "Set HttpOnly and Secure flags on cookies",
+        "Validate and sanitize HTML input (allowlist approach)",
+        "Use framework templating engines with auto-escaping"
+      ]
+    },
+    {
+      "test": "Authentication Security Tests",
+      "status": "NEEDS_IMPROVEMENT",
+      "findings": 2,
+      "details": [
+        "Weak password policy detected",
+        "No account lockout mechanism",
+        "Consider implementing 2FA"
+      ],
+      "recommendations": [
+        "Implement strong password policy (min 12 chars, complexity)",
+        "Add account lockout after 5 failed attempts",
+        "Implement exponential backoff for lockouts",
+        "Use secure session management with regeneration",
+        "Consider implementing 2FA for sensitive operations",
+        "Use secure, HTTP-only cookies for sessions"
+      ]
+    },
+    {
+      "test": "Input Validation Tests",
+      "status": "SECURE",
+      "findings": 0,
+      "details": [
+        "Input validation should be implemented at API boundaries",
+        "Use strict type checking for all inputs",
+        "Implement length limits for text inputs",
+        "Validate business rules separately"
+      ],
+      "recommendations": [
+        "Validate all input at API boundaries",
+        "Use strict type checking",
+        "Implement length limits for all text inputs",
+        "Use allowlists over denylists",
+        "Validate business rules separately",
+        "Sanitize output based on context"
+      ]
+    },
+    {
+      "test": "Error Handling Tests",
+      "status": "SECURE",
+      "findings": 0,
+      "details": [
+        "Error messages should not reveal system details",
+        "Use generic error messages in production",
+        "Log detailed errors internally only"
+      ],
+      "recommendations": [
+        "Use generic error messages in production",
+        "Log detailed errors internally only",
+        "Implement custom error pages",
+        "Validate all input before processing",
+        "Implement circuit breakers for dependencies",
+        "Monitor error rates and patterns"
+      ]
+    },
+    {
+      "test": "Rate Limiting Structure Tests",
+      "status": "NEEDS_IMPROVEMENT",
+      "findings": 1,
+      "details": [
+        "No rate limiting detected on authentication endpoints",
+        "Consider implementing IP-based and user-based limits"
+      ],
+      "recommendations": [
+        "Implement rate limiting on authentication endpoints",
+        "Use token bucket algorithm for precise control",
+        "Implement IP-based and user-based limits",
+        "Add rate limit headers to responses (X-RateLimit-*)",
+        "Consider CAPTCHA for suspicious traffic",
+        "Monitor for distributed attacks"
+      ]
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "type": "SQL Injection",
+      "payload": "' OR '1'='1",
+      "description": "Basic SQL injection",
+      "severity": "CRITICAL",
+      "impact": "Data breach, unauthorized access, data loss"
+    },
+    {
+      "type": "SQL Injection",
+      "payload": "' UNION SELECT null, null --",
+      "description": "Union-based injection",
+      "severity": "CRITICAL",
+      "impact": "Data breach, unauthorized access, data loss"
+    },
+    {
+      "type": "SQL Injection",
+      "payload": "admin' --",
+      "description": "Authentication bypass attempt",
+      "severity": "CRITICAL",
+      "impact": "Data breach, unauthorized access, data loss"
+    },
+    {
+      "type": "XSS",
+      "payload": "<script>alert(\"XSS\")</script>",
+      "description": "Basic script injection",
+      "severity": "HIGH",
+      "impact": "Session hijacking, credential theft, defacement"
+    },
+    {
+      "type": "XSS",
+      "payload": "<img src=x onerror=alert(\"XSS\")>",
+      "description": "Image with onerror handler",
+      "severity": "HIGH",
+      "impact": "Session hijacking, credential theft, defacement"
+    },
+    {
+      "type": "XSS",
+      "payload": "javascript:alert(\"XSS\")",
+      "description": "JavaScript URI",
+      "severity": "HIGH",
+      "impact": "Session hijacking, credential theft, defacement"
+    },
+    {
+      "type": "Authentication",
+      "issue": "Weak password policy",
+      "description": "Minimum password requirements not enforced",
+      "severity": "MEDIUM",
+      "impact": "Easier brute force attacks"
+    },
+    {
+      "type": "Authentication",
+      "issue": "No account lockout",
+      "description": "Unlimited login attempts allowed",
+      "severity": "HIGH",
+      "impact": "Brute force attacks possible"
+    },
+    {
+      "type": "Rate Limiting",
+      "issue": "No rate limiting on login",
+      "description": "Unlimited login attempts allowed",
+      "severity": "HIGH",
+      "impact": "Brute force attacks possible"
+    }
+  ],
+  "all_recommendations": [
+    "Use parameterized queries/prepared statements",
+    "Implement input validation and sanitization",
+    "Use ORM with built-in SQL injection protection",
+    "Apply principle of least privilege to database users",
+    "Implement WAF (Web Application Firewall)",
+    "Implement output encoding for all user-generated content",
+    "Use Content Security Policy (CSP) headers",
+    "Set HttpOnly and Secure flags on cookies",
+    "Validate and sanitize HTML input (allowlist approach)",
+    "Use framework templating engines with auto-escaping",
+    "Implement strong password policy (min 12 chars, complexity)",
+    "Add account lockout after 5 failed attempts",
+    "Implement exponential backoff for lockouts",
+    "Use secure session management with regeneration",
+    "Consider implementing 2FA for sensitive operations",
+    "Use secure, HTTP-only cookies for sessions",
+    "Validate all input at API boundaries",
+    "Use strict type checking",
+    "Implement length limits for all text inputs",
+    "Use allowlists over denylists",
+    "Validate business rules separately",
+    "Sanitize output based on context",
+    "Use generic error messages in production",
+    "Log detailed errors internally only",
+    "Implement custom error pages",
+    "Validate all input before processing",
+    "Implement circuit breakers for dependencies",
+    "Monitor error rates and patterns",
+    "Implement rate limiting on authentication endpoints",
+    "Use token bucket algorithm for precise control",
+    "Implement IP-based and user-based limits",
+    "Add rate limit headers to responses (X-RateLimit-*)",
+    "Consider CAPTCHA for suspicious traffic",
+    "Monitor for distributed attacks"
+  ],
+  "priority_recommendations": [
+    "Use parameterized queries/prepared statements",
+    "Implement input validation and sanitization",
+    "Use ORM with built-in SQL injection protection",
+    "Apply principle of least privilege to database users",
+    "Implement WAF (Web Application Firewall)"
+  ]
+}

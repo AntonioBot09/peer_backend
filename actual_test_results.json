@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-04-09 16:46:20",
+  "tests": [
+    {
+      "test": "Basic GraphQL",
+      "status": 200,
+      "success": true,
+      "response": {
+        "data": {
+          "__typename": "Query"
+        }
+      }
+    },
+    {
+      "test": "SQL Injection",
+      "status": 400,
+      "success": true,
+      "blocked": true,
+      "response": "{\"error\": \"Invalid input detected\"}"
+    },
+    {
+      "test": "XSS",
+      "status": 400,
+      "success": true,
+      "blocked": true,
+      "response": "{\"error\": \"Invalid input detected\"}"
+    },
+    {
+      "test": "Valid Login",
+      "status": 200,
+      "success": true,
+      "has_token": true,
+      "response": {
+        "data": {
+          "login": {
+            "meta": {
+              "status": "success",
+              "RequestId": "req_123",
+              "ResponseCode": "200",
+              "ResponseMessage": "Login successful"
+            },
+            "accessToken": "mock_jwt_token_123",
+            "refreshToken": "mock_refresh_token_123"
+          }
+        }
+      }
+    },
+    {
+      "test": "Invalid Login",
+      "status": 401,
+      "success": true,
+      "rejected": true,
+      "response": "{\"data\": {\"login\": {\"meta\": {\"status\": \"error\", \"RequestId\": \"req_124\", \"ResponseCode\": \"401\", \"ResponseMessage\": \"Invalid credentials\"}, \"accessToken\": null, \"refreshToken\": null}}}"
+    },
+    {
+      "test": "Health Check",
+      "status": 200,
+      "success": true,
+      "response": {
+        "status": "ok"
+      }
+    }
+  ],
+  "summary": {
+    "total_tests": 6,
+    "passed_tests": 6,
+    "success_rate": 100.0,
+    "security_assessment": {
+      "sql_injection_protected": true,
+      "xss_protected": true,
+      "authentication_working": true
+    }
+  }
+}
