@@ -31,7 +31,6 @@ jobs:
     - name: Run security tests
       id: security-tests
       run: |
-        cd backend
         echo "🔒 Running PeerNetwork Security Tests"
         echo "======================================"
         
@@ -70,14 +69,13 @@ jobs:
       with:
         name: security-test-results
         path: |
-          backend/security-test-report.json
-          backend/executive-security-summary.json
+          security-test-report.json
+          executive-security-summary.json
         retention-days: 30
         
     - name: Generate security badge
       if: success()
       run: |
-        cd backend
         python3 -c "
         import json
         with open('security-test-report.json') as f:
@@ -108,7 +106,7 @@ jobs:
         script: |
           try {
             const fs = require('fs');
-            const report = JSON.parse(fs.readFileSync('backend/security-test-report.json', 'utf8'));
+            const report = JSON.parse(fs.readFileSync('security-test-report.json', 'utf8'));
             
             const summary = report.summary;
             const vulnerabilities = report.vulnerabilities || [];
