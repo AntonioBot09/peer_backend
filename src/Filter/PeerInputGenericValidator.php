@@ -161,6 +161,25 @@ class PeerInputGenericValidator
         return false;
     }
 
+    protected function validateGenericUuid(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'uuid';
+        if ($value !== null && $value === '') {
+            return false;
+        }
+
+        if (!is_string($value)) {
+            $this->pushError($options, $fieldKey, '30272');
+            return false;
+        }
+
+        if (preg_match('/^\{?[a-fA-F0-9]{8}\-[a-fA-F0-9]{4}\-[a-fA-F0-9]{4}\-[a-fA-F0-9]{4}\-[a-fA-F0-9]{12}\}?$/', $value) === 1) {
+            return true;
+        }
+        $this->pushError($options, $fieldKey, '30272');
+        return false;
+    }
+
     protected function Date(string $value, array $options = []): bool
     {
         $fieldKey = $options['field'] ?? 'Date';
@@ -180,7 +199,7 @@ class PeerInputGenericValidator
         if ($dateTime) {
             $formatted = $dateTime->format($format);
 
-            $formatted = preg_replace_callback('/\.(\d{1,6})(0*)$/', fn($matches) => '.' . str_pad($matches[1], 6, '0'), $formatted);
+            $formatted = preg_replace_callback('/\.(\d{1,6})(0*)$/', fn ($matches) => '.' . str_pad($matches[1], 6, '0'), $formatted);
 
             $value = trim($value);
             $formatted = trim($formatted);
@@ -280,6 +299,206 @@ class PeerInputGenericValidator
 
         return true;
     }
+
+    protected function validateTokenAmount(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'tokenAmount';
+        $options['errorCode'] = $options['errorCode'] ?? '30264';
+
+        if ($value === null) {
+            $this->pushError($options, $fieldKey, '30264');
+            return false;
+        }
+
+        if (!is_string($value) && !is_int($value) && !is_float($value) && (float)$value <= 0) {
+            $this->pushError($options, $fieldKey, '30264');
+            return false;
+        }
+
+        $rawAmount = trim((string)$value);
+        if ($rawAmount === '') {
+            $this->pushError($options, $fieldKey, '30264');
+            return false;
+        }
+
+        if (preg_match('/^(?:\d+)(?:\.\d+)?$/', $rawAmount) !== 1) {
+            $this->pushError($options, $fieldKey, '30264');
+            return false;
+        }
+
+        $transactionConfig = ConstantsConfig::user()['TRANSACTION'];
+        $minAmount = (float)$transactionConfig['MIN_AMOUNT'];
+        $maxDecimals = (int)$transactionConfig['MAX_DECIMALS'];
+
+        $parts = explode('.', $rawAmount);
+        if (isset($parts[1]) && strlen($parts[1]) > $maxDecimals) {
+            $this->pushError($options, $fieldKey, '30264');
+            return false;
+        }
+
+        if ((float)$rawAmount < $minAmount) {
+            $this->pushError($options, $fieldKey, '30264');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function validateAddressLine1(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'addressline1';
+        $options['errorCode'] = $options['errorCode'] ?? '30273';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30273');
+            return false;
+        }
+
+        $peerShopConfig = ConstantsConfig::shop()['ADDRESS'];
+
+        $val = trim((string)$value);
+        if ($val === '' || strlen($val) < $peerShopConfig['MIN_LENGTH'] || strlen($val) > $peerShopConfig['MAX_LENGTH']) {
+            $this->pushError($options, $fieldKey, '30273');
+            return false;
+        }
+
+        return true;
+    }
+
+
+    protected function validateAddressLine2(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'addressline2';
+        $options['errorCode'] = $options['errorCode'] ?? '30279';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30279');
+            return false;
+        }
+
+        $peerShopConfig = ConstantsConfig::shop()['ADDRESS'];
+
+        $val = trim((string)$value);
+        if ($val === '' || strlen($val) < $peerShopConfig['MIN_LENGTH'] || strlen($val) > $peerShopConfig['MAX_LENGTH']) {
+            $this->pushError($options, $fieldKey, '30279');
+            return false;
+        }
+
+        return true;
+    }
+
+
+    protected function validateCity(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'city';
+        $options['errorCode'] = $options['errorCode'] ?? '30274';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30274');
+            return false;
+        }
+
+        $peerShopConfig = ConstantsConfig::shop()['CITY'];
+
+        $val = trim((string)$value);
+        if ($val === '' || strlen($val) < $peerShopConfig['MIN_LENGTH'] || strlen($val) > $peerShopConfig['MAX_LENGTH']) {
+            $this->pushError($options, $fieldKey, '30274');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function validateZipCode(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'zipCode';
+        $options['errorCode'] = $options['errorCode'] ?? '30275';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30275');
+            return false;
+        }
+
+        $peerShopConfig = ConstantsConfig::shop()['ZIPCODE'];
+        $zipCodeLength = $peerShopConfig['LENGTH'];
+
+        $val = trim((string)$value);
+        if (preg_match('/^\d{' . $zipCodeLength . '}$/', $val) !== 1) {
+            $this->pushError($options, $fieldKey, '30275');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function validateCountry(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'country';
+        $options['errorCode'] = $options['errorCode'] ?? '30276';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30276');
+            return false;
+        }
+
+        $val = trim((string)$value);
+        if ($val === '') {
+            $this->pushError($options, $fieldKey, '30276');
+            return false;
+        }
+
+        $allowedCountries = ConstantsConfig::shop()['COUNTRIES'];
+        $normalizedAllowed = array_map('strtolower', $allowedCountries);
+
+        if (!in_array(strtolower($val), $normalizedAllowed, true)) {
+            $this->pushError($options, $fieldKey, '30276');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function validateName(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'name';
+        $options['errorCode'] = $options['errorCode'] ?? '30277';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30277');
+            return false;
+        }
+        $peerShopConfig = ConstantsConfig::shop()['NAME'];
+
+        $val = trim((string)$value);
+        if ($val === '' || strlen($val) < $peerShopConfig['MIN_LENGTH'] || strlen($val) > $peerShopConfig['MAX_LENGTH']) {
+            $this->pushError($options, $fieldKey, '30277');
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function validateSize(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? 'size';
+        $options['errorCode'] = $options['errorCode'] ?? '30278';
+
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            $this->pushError($options, $fieldKey, '30278');
+            return false;
+        }
+
+        $peerShopConfig = ConstantsConfig::shop()['SIZE'];
+
+        $val = trim((string)$value);
+        if ($val === '' || strlen($val) < $peerShopConfig['MIN_LENGTH'] || strlen($val) > $peerShopConfig['MAX_LENGTH']) {
+            $this->pushError($options, $fieldKey, '30278');
+            return false;
+        }
+
+        return true;
+    }
+
 
     // Validate a single offset/limit-like field based on options['field']
     protected function validateOffsetAndLimit(int $value, array $options = []): bool
@@ -493,8 +712,9 @@ class PeerInputGenericValidator
 
         return true;
     }
-    protected function validateDateMonthYearString(string $value, array $options = []): bool {
-        $fieldKey = $options['field'] ?? 'date';
+    protected function validateDateMonthYearString(string $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'];
         $errorCode = (string)($options['errorCode'] ?? '30258');
 
         // Treat empty value as valid (field is optional in schema)
@@ -513,6 +733,53 @@ class PeerInputGenericValidator
         // Validate calendar correctness
         [$year, $month, $day] = array_map('intval', explode('-', $val));
         if (!checkdate($month, $day, $year)) {
+            $this->pushError($options, $fieldKey, $errorCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function validateDateOffsetString(string $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'];
+        $errorCode = (string)($options['errorCode'] ?? '30223');
+
+        // Treat empty value as valid (field is optional in schema)
+        if ($value === '' || $value === null) {
+            return true;
+        }
+
+        $val = trim((string)$value);
+        $allowedOffsets = ['D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'W0', 'M0', 'Y0'];
+        if (!in_array($val, $allowedOffsets, true)) {
+            $this->pushError($options, $fieldKey, $errorCode);
+            return false;
+        }
+
+        return true;
+    }
+    /**
+     * validatePositiveNumber
+     *
+     * should only contain numberic values and more than zero value
+     */
+    protected function validatePositiveNumber(mixed $value, array $options = []): bool
+    {
+        $fieldKey = $options['field'] ?? null;
+        $errorCode = (string)($options['errorCode'] ?? '33001');
+
+        if ($value === '' || $value === null) {
+            $this->pushError($options, $fieldKey, $errorCode);
+            return false;
+        }
+
+        if (!is_numeric($value)) {
+            $this->pushError($options, $fieldKey, $errorCode);
+            return false;
+        }
+
+        if ((float)$value <= 0) {
             $this->pushError($options, $fieldKey, $errorCode);
             return false;
         }

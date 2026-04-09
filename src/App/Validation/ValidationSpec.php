@@ -10,6 +10,17 @@ namespace Fawaz\App\Validation;
  */
 class ValidationSpec
 {
+    public static function dateOffset(string $field, bool $required = false, int $errorCode = 30223): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateDateOffsetString', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
     public static function dateMonthYearString(string $field, bool $required = false, int $errorCode = 30258): array
     {
         return [
@@ -92,6 +103,128 @@ class ValidationSpec
         ];
     }
 
+    public static function tokenAmount(string $field = 'tokenAmount', bool $required = true, int $errorCode = 30264): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateTokenAmount', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function addressLine1(string $field = 'addressline1', bool $required = false, int $errorCode = 30273): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateAddressLine1', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+
+    public static function addressLine2(string $field = 'addressline2', bool $required = false, int $errorCode = 30279): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateAddressLine2', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function city(string $field = 'city', bool $required = false, int $errorCode = 30274): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateCity', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function zipCode(string $field = 'zipCode', bool $required = false, int $errorCode = 30275): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateZipCode', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function country(string $field = 'country', bool $required = false, int $errorCode = 30276): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateCountry', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function name(string $field = 'name', bool $required = false, int $errorCode = 30277): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateName', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function validatePositiveNumber(string $field, bool $required = false, int $errorCode = 33001): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validatePositiveNumber', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+    public static function genericUuid(string $field, bool $required = false, int $errorCode = 30272): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateGenericUuid', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
+
+    public static function size(string $field, bool $required = false, int $errorCode = 30278): array
+    {
+        return [
+            $field => [
+                'required' => $required,
+                'validators' => [
+                    ['name' => 'validateSize', 'options' => ['field' => $field, 'errorCode' => $errorCode]],
+                ],
+            ],
+        ];
+    }
+
     /**
      * Merge multiple partial specs into one spec array.
      */
@@ -144,8 +277,24 @@ class ValidationSpec
             'messageOffset' => fn (string $f, bool $r) => self::offsetAndLimit($f, $r),
             'messageLimit' => fn (string $f, bool $r) => self::offsetAndLimit($f, $r),
 
+            'dateOffset' => fn (string $f, bool $r) => self::dateOffset($f, $r),
+
+            'dateYYYYMMDD' => fn (string $f, bool $r) => self::dateMonthYearString($f, $r),
             'start_date' => fn (string $f, bool $r) => self::dateMonthYearString($f, $r),
             'end_date' => fn (string $f, bool $r) => self::dateMonthYearString($f, $r),
+
+            'tokenAmount' => fn (string $f, bool $r) => self::tokenAmount($f, $r),
+            'name' => fn (string $f, bool $r) => self::name($f, $r),
+            'addressline1' => fn (string $f, bool $r) => self::addressLine1($f, $r),
+            'city' => fn (string $f, bool $r) => self::city($f, $r),
+            'zipcode' => fn (string $f, bool $r) => self::zipCode($f, $r),
+            'country' => fn (string $f, bool $r) => self::country($f, $r),
+            'shopItemId' => fn (string $f, bool $r) => self::genericUuid($f, $r),
+            'transactionId' => fn (string $f, bool $r) => self::genericUuid($f, $r),
+            'size' => fn (string $f, bool $r) => self::size($f, false),
+            'addressline2' => fn (string $f, bool $r) => self::addressLine2($f, false),
+
+            'leaderboardUsersCount' => fn (string $f, bool $r) => self::validatePositiveNumber($f, $r),
         ];
 
         $spec = [];

@@ -16,6 +16,7 @@ use function DI\string;
  */
 class TransactionHistoryItem implements HasUserRefs
 {
+    private string $transactionid;
     private string $operationid;
     private string $transactiontype;
     protected ?TransactionCategory $transactioncategory;
@@ -36,12 +37,13 @@ class TransactionHistoryItem implements HasUserRefs
     {
         $tokenamount = (string)$data['tokenamount'];
         $netTokenAmount = (string)$data['netTokenAmount'];
-        if( $currentUserId === (string)$data['senderid']) {
+        if ($currentUserId === (string)$data['senderid']) {
             $tokenamount = '-' . sprintf('%.10F', $tokenamount);
             $netTokenAmount = '-' . sprintf('%.10F', $netTokenAmount);
-        } 
+        }
 
         $this->operationid = (string)($data['operationid'] ?? '');
+        $this->transactionid = (string)($data['transactionid'] ?? '');
         $this->transactiontype = (string)($data['transactiontype'] ?? '');
         $this->transactioncategory = TransactionCategory::tryFrom($data['transactioncategory']) ?? null;
         $this->tokenamount = $tokenamount;
@@ -59,7 +61,8 @@ class TransactionHistoryItem implements HasUserRefs
     }
 
     // we are rounding only two values and only for presentation(api). this values are not stored anywhere
-    private function roundTokenAmount() {
+    private function roundTokenAmount()
+    {
         $this->netTokenAmount = (string)round((float)$this->netTokenAmount, 8);
         $this->tokenamount = (string)round((float)$this->tokenamount, 8);
     }
@@ -68,6 +71,7 @@ class TransactionHistoryItem implements HasUserRefs
     {
         return [
             'operationid' => $this->operationid,
+            'transactionid' => $this->transactionid,
             'transactiontype' => $this->transactiontype,
             'transactioncategory' => $this->transactioncategory->value,
             'tokenamount' => sprintf('%.10F', $this->tokenamount),

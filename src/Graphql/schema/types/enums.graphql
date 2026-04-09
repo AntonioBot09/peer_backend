@@ -135,6 +135,7 @@ enum TransactionCategory {
   COMMENT
   TOKEN_MINT
   SHOP_PURCHASE
+  INVITER_FEE_EARN
 }
 
 enum OnboardingType {
@@ -158,4 +159,8 @@ enum ContentVisibilityStatus {
   NORMAL
   HIDDEN
   ILLEGAL
+}
+
+enum ShopSupportedDeliveryCountry {
+  GERMANY
 }
