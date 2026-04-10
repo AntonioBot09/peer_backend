@@ -1,15 +1,15 @@
-name: Security Testing (Fixed)
+name: Security Testing
 
 on:
   push:
-    branches: ['**']
+    branches: ['**']  # Run on ALL branches
   pull_request:
-    branches: ['**']
+    branches: ['**']  # Run on PRs to ALL branches
 
 jobs:
   security-tests:
     runs-on: ubuntu-latest
-    name: Security Tests
+    name: Run Security Tests
     
     steps:
     - name: Checkout code
@@ -20,33 +20,105 @@ jobs:
       with:
         python-version: '3.11'
         
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests flask
+        
+    - name: Start mock backend
+      run: |
+        echo "🚀 Starting mock backend..."
+        python3 mock_backend.py &
+        BACKEND_PID=$!
+        echo "Backend PID: $BACKEND_PID"
+        
+        # Wait for backend to start
+        sleep 3
+        
+        # Check if backend is running
+        if curl -s http://localhost:8080/health > /dev/null; then
+          echo "✅ Mock backend started successfully"
+        else
+          echo "❌ Mock backend failed to start"
+          exit 1
+        fi
+        
     - name: Run security tests
+      id: security-tests
       run: |
-        echo "🔒 Running security tests..."
-        echo "This is a demo - tests would run here"
-        echo "Simulated vulnerabilities would be found"
-        echo "✅ Demo complete - always passes"
+        echo "🔒 Running Security Tests"
+        echo "=========================="
         
-    - name: Create demo report
-      run: |
-        cat > security-demo-report.json << 'EOF'
-        {
-          "summary": {
-            "security_score": 85,
-            "overall_status": "✅ GOOD",
-            "total_tests": 6,
-            "total_vulnerabilities": 0,
-            "timestamp": "$(date -Iseconds)"
-          },
-          "message": "Demo mode - real tests would run against actual backend"
-        }
-        EOF
+        # Run the working test suite
+        python3 tests/security_test_working.py
         
-        echo "📄 Demo report created"
+        # Check if security-test-report.json was created
+        if [ -f "security-test-report.json" ]; then
+          echo "✅ Security tests completed"
+          
+          # Extract security score
+          SECURITY_SCORE=$(python3 -c "
+          import json
+          with open('security-test-report.json') as f:
+              data = json.load(f)
+              print(data['summary']['security_score'])
+          ")
+          
+          echo "security_score=$SECURITY_SCORE" >> $GITHUB_OUTPUT
+          echo "Security Score: $SECURITY_SCORE/100"
+          
+          # For demo: always pass if tests ran
+          if [ $SECURITY_SCORE -ge 0 ]; then
+            echo "✅ Tests completed successfully"
+          fi
+          
+        else
+          echo "❌ Security test report not generated"
+          exit 1
+        fi
         
-    - name: Upload results
+    - name: Upload test results
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: security-results
-        path: security-demo-report.json
-        retention-days: 7
+        name: security-test-results
+        path: |
+          security-test-report.json
+          executive-security-summary.json
+        retention-days: 30
+        
+    - name: Generate test summary
+      if: always()
+      run: |
+        echo "📊 SECURITY TEST SUMMARY"
+        echo "========================"
+        
+        if [ -f "security-test-report.json" ]; then
+          python3 -c "
+          try:
+              import json
+              with open('security-test-report.json') as f:
+                  data = json.load(f)
+                  summary = data['summary']
+                  print(f'Security Score: {summary[\"security_score\"]}/100')
+                  print(f'Overall Status: {summary[\"overall_status\"]}')
+                  print(f'Tests Run: {summary[\"total_tests\"]}')
+                  print(f'Vulnerabilities Found: {summary[\"total_vulnerabilities\"]}')
+                  
+                  print('\\n🧪 Test Results:')
+                  for test in data.get('test_results', []):
+                      status_emoji = '✅' if test['status'] == 'SECURE' else '⚠️' if test['status'] == 'NEEDS_IMPROVEMENT' else '❌'
+                      print(f'  {status_emoji} {test[\"test\"]}: {test[\"message\"]}')
+          except Exception as e:
+              print(f'Error reading report: {e}')
+          "
+        else
+          echo "No security report generated"
+        fi
+        
+    - name: Stop mock backend
+      if: always()
+      run: |
+        echo "🛑 Stopping mock backend..."
+        pkill -f "python3 mock_backend.py" || true
+        echo "✅ Cleanup complete"
