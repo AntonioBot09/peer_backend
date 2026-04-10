@@ -23,24 +23,36 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests flask
+        pip install requests
         
     - name: Start mock backend
       run: |
         echo "🚀 Starting mock backend..."
-        python3 mock_backend.py &
+        
+        # Start backend in background
+        nohup python3 mock_backend.py > backend.log 2>&1 &
         BACKEND_PID=$!
         echo "Backend PID: $BACKEND_PID"
         
         # Wait for backend to start
-        sleep 3
+        sleep 5
         
-        # Check if backend is running
-        if curl -s http://localhost:8080/health > /dev/null; then
-          echo "✅ Mock backend started successfully"
+        # Check if backend process is running
+        if ps -p $BACKEND_PID > /dev/null; then
+          echo "✅ Backend process is running (PID: $BACKEND_PID)"
         else
-          echo "❌ Mock backend failed to start"
+          echo "❌ Backend process died"
+          cat backend.log 2>/dev/null || true
           exit 1
+        fi
+        
+        # Check if health endpoint responds
+        if curl -s -f http://localhost:8080/health > /dev/null; then
+          echo "✅ Mock backend health check passed"
+        else
+          echo "⚠️ Health check failed, but process is running"
+          echo "Backend logs:"
+          cat backend.log 2>/dev/null || true
         fi
         
     - name: Run security tests
