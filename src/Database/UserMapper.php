@@ -628,7 +628,7 @@ class UserMapper implements UserMapperInterface
 
             if ($data !== false) {
                 $this->logger->info("User info fetched successfully", ['id' => $id]);
-                return new User($data, [], false)->getArrayCopy();
+                return (new User($data, [], false))->getArrayCopy();
             }
 
             $this->logger->warning("No user found with id", ['id' => $id]);
@@ -1309,7 +1309,7 @@ class UserMapper implements UserMapperInterface
             $stmt->bindValue(':ip', $data['ip'], PDO::PARAM_STR);
             $stmt->bindValue(':img', $data['img'], PDO::PARAM_STR);
             $stmt->bindValue(':biography', $data['biography'], PDO::PARAM_STR);
-            $stmt->bindValue(':updatedat', new \DateTime()->format('Y-m-d H:i:s.u'), PDO::PARAM_STR);
+            $stmt->bindValue(':updatedat', (new \DateTime())->format('Y-m-d H:i:s.u'), PDO::PARAM_STR);
             $stmt->bindValue(':uid', $data['uid'], PDO::PARAM_STR);
             $stmt->bindValue(':visibility_status', $data['visibility_status'], PDO::PARAM_STR);
             $stmt->execute();
@@ -1644,7 +1644,7 @@ class UserMapper implements UserMapperInterface
                         'status' => $prt['followerstatus'],
                         'username' => $prt['followername'],
                     ];
-                $userObj = new User($userObj, [], false)->getArrayCopy();
+                $userObj = (new User($userObj, [], false))->getArrayCopy();
 
                 $userResultObj[$key] = $prt;
                 $userResultObj[$key]['followername'] = $userObj['username'];
@@ -1653,7 +1653,7 @@ class UserMapper implements UserMapperInterface
                         'status' => $prt['followedstatus'],
                         'username' => $prt['followedname'],
                     ];
-                $userObj = new User($userObj, [], false)->getArrayCopy();
+                $userObj = (new User($userObj, [], false))->getArrayCopy();
                 $userResultObj[$key]['followedname'] = $userObj['username'];
 
             }
@@ -1671,7 +1671,7 @@ class UserMapper implements UserMapperInterface
     */
     public function sendPasswordResetEmail(string $email, array $data): void
     {
-        new PasswordRestMail($data)->send($email);
+        (new PasswordRestMail($data))->send($email);
     }
 
     /**

@@ -450,7 +450,7 @@ class WalletMapper implements WalletCreditable, WalletDebitable
         $fromId = $args['fromid'] ?? null;
         $gems = $args['gems'] ?? 0.0;
         $numBers = $args['numbers'] ?? 0;
-        $createdat = $args['createdat'] ?? new \DateTime()->format('Y-m-d H:i:s.u');
+        $createdat = $args['createdat'] ?? (new \DateTime())->format('Y-m-d H:i:s.u');
 
         $id = self::generateUUID();
 
@@ -500,7 +500,7 @@ class WalletMapper implements WalletCreditable, WalletDebitable
         $postId = $args['postid'] ?? null;
         $fromId = $args['fromid'] ?? null;
         $numBers = $args['numbers'] ?? '0';
-        $createdat = $args['createdat'] ?? new \DateTime()->format('Y-m-d H:i:s.u');
+        $createdat = $args['createdat'] ?? (new \DateTime())->format('Y-m-d H:i:s.u');
 
         $sql = "INSERT INTO wallet 
                 (token, userid, postid, fromid, numbers, numbersq, whereby, createdat) 
@@ -604,7 +604,7 @@ class WalletMapper implements WalletCreditable, WalletDebitable
                 $stmt->bindValue(':userid', $userId, PDO::PARAM_STR);
                 $stmt->bindValue(':liquidity', $liquidity, PDO::PARAM_STR);
                 $stmt->bindValue(':liquiditq', $liquiditq, PDO::PARAM_STR);
-                $stmt->bindValue(':updatedat', new \DateTime()->format('Y-m-d H:i:s.u'), PDO::PARAM_STR);
+                $stmt->bindValue(':updatedat', (new \DateTime())->format('Y-m-d H:i:s.u'), PDO::PARAM_STR);
                 $stmt->execute();
             } else {
                 // User exists, safely calculate new liquidity
@@ -631,7 +631,7 @@ class WalletMapper implements WalletCreditable, WalletDebitable
                 $stmt->bindValue(':userid', $userId, PDO::PARAM_STR);
                 $stmt->bindValue(':liquidity', $newLiquidity, PDO::PARAM_STR);
                 $stmt->bindValue(':liquiditq', $liquiditq, PDO::PARAM_STR);
-                $stmt->bindValue(':updatedat', new \DateTime()->format('Y-m-d H:i:s.u'), PDO::PARAM_STR);
+                $stmt->bindValue(':updatedat', (new \DateTime())->format('Y-m-d H:i:s.u'), PDO::PARAM_STR);
 
                 $stmt->execute();
             }

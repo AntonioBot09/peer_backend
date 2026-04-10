@@ -232,7 +232,7 @@ class ModerationMapper
                 $item['targetcontent']['comment'] = $commentData;
             }
         } elseif ($item['targettype'] === 'user') {
-            $item['targetcontent']['user'] = new User([
+            $item['targetcontent']['user'] = (new User([
                 'uid' => $item['uid'],
                 'username' => $item['username'],
                 'email' => $item['email'],
@@ -242,7 +242,7 @@ class ModerationMapper
                 'biography' => $item['biography'],
                 'updatedat' => $item['updatedat'],
                 'visibility_status' => $item['visibility_status'],
-            ], [], false)->getArrayCopy();
+            ], [], false))->getArrayCopy();
         }
 
         return $item;
@@ -278,7 +278,7 @@ class ModerationMapper
     {
         try {
             $moderationId = self::generateUUID();
-            $createdat = (string) new DateTime()->format('Y-m-d H:i:s.u');
+            $createdat = (string) (new DateTime())->format('Y-m-d H:i:s.u');
 
             $report = UserReport::query()->where('moderationticketid', $moderationTicketId)->first();
 

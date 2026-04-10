@@ -1,4 +1,4 @@
-name: Security Tests
+name: PHPUnit Tests
 
 on:
   push:
@@ -7,50 +7,31 @@ on:
     branches: ['**']
 
 jobs:
-  security:
+  phpunit:
+    name: PHPUnit Test Suite
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Start mock backend
-      run: |
-        echo "✅ Mock backend simulation (demo mode)"
-        echo "Backend would start here for real tests"
-        
-    - name: Run security tests
-      run: |
-        echo "🔒 Security Tests Running"
-        echo "Score: 95/100"
-        echo "Status: ✅ PASS"
-        echo "Tests completed successfully"
-        
-    - name: Generate test summary
-      run: |
-        echo "📊 SECURITY TEST SUMMARY"
-        echo "========================"
-        echo "Security Score: 95/100"
-        echo "Overall Status: ✅ EXCELLENT"
-        echo "Tests Run: 4"
-        echo "Vulnerabilities Found: 0"
-        echo "\n🎯 Test Areas Covered:"
-        echo "• SQL Injection Protection"
-        echo "• XSS Prevention"
-        echo "• Authentication Security"
-        echo "• Input Validation"
-        
-    - name: Create report
-      run: |
-        echo '{"score": 95, "status": "pass", "tests": 4, "vulnerabilities": 0}' > security-test-report.json
-        echo '{"summary": "Security framework implemented and passing"}' > executive-security-summary.json
-        echo "✅ Reports created"
-        
-    - name: Upload test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-test-results
-        path: |
-          security-test-report.json
-          executive-security-summary.json
-        retention-days: 30
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo, pdo_mysql, pdo_sqlite, mbstring, openssl, ffi
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run PHPUnit tests
+        run: vendor/bin/phpunit tests/Unit --colors=always --testdox
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## PHPUnit Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          vendor/bin/phpunit tests/Unit --testdox --no-progress 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY || true
